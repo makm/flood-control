@@ -1,0 +1,19 @@
+{
+  "name": "makm/flood-control",
+  "description": "",
+  "authors": [
+    {
+      "name": "Maxim Kapkaev",
+      "email": "makm@km.ru"
+    }
+  ],
+  "require-dev": {
+    "phpunit/phpunit": "^8.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "Makm\\FloodControl\\": "src/",
+      "Makm\\FloodControl\\Tests\\": "tests/"
+    }
+  }
+}
