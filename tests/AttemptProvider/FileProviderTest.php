@@ -25,26 +25,33 @@ class FileProviderTest extends TestCase
         $this->provider = new FileProvider();
     }
 
-
+    /**
+     * @throws \Exception
+     */
     public function testPushAndTimes()
     {
-        $this->provider->push('test1', new \DateTime);
-        $times = $this->provider->times('test1', new \DateTime('-1 month'));
+        $action = 'test-push-1';
+        $this->provider->purge($action);
+
+        $this->provider->push($action, new \DateTime);
+        $times = $this->provider->times($action, new \DateTime('-1 month'));
         $this->assertEquals(1, $times);
 
-        $this->provider->push('test1', new \DateTime);
-        $times = $this->provider->times('test1', new \DateTime('-1 month'));
+        $this->provider->push($action, new \DateTime);
+        $times = $this->provider->times($action, new \DateTime('-1 month'));
         $this->assertEquals(2, $times);
 
-        $this->provider->push('test1', new \DateTime('-2 month'));
-        $times = $this->provider->times('test1', new \DateTime('-1 month'));
+        $this->provider->push($action, new \DateTime('-2 month'));
+        $times = $this->provider->times($action, new \DateTime('-1 month'));
         $this->assertEquals(2, $times);
+
+        $this->provider->purge($action);
     }
 
     /**
      * @throws \Exception
      */
-    public function testClear()
+    public function testPurge()
     {
         $action = 'test-purge-1';
         $this->provider->purge($action);
@@ -65,7 +72,7 @@ class FileProviderTest extends TestCase
         $times = $this->provider->times($action, new \DateTime('-1 month'));
         $this->assertEquals(1, $times);
 
-
+        $this->provider->purge($action);
     }
 
 }

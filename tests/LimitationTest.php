@@ -77,4 +77,23 @@ class LimitationTest extends TestCase
 
         $this->assertTrue($isEqual);
     }
+
+    /**
+     * @return void
+     */
+    public function testGetExtremeLimit()
+    {
+        $limitations = new Limitations(
+            [
+                ['period' => Limitations::PERIOD_WEEK, 'amount' => 5, 'times' => 15],
+                ['period' => Limitations::PERIOD_WEEK, 'amount' => 3, 'times' => 3],
+                ['period' => Limitations::PERIOD_DAY, 'amount' => 3, 'times' => 10],
+                ['period' => Limitations::PERIOD_DAY, 'amount' => 1, 'times' => 2],
+                ['period' => Limitations::PERIOD_MONTH, 'amount' => 1, 'times' => 200],
+            ]
+        );
+
+        $data = $limitations->getExtremeLimit();
+        $this->assertEquals(['period' => Limitations::PERIOD_MONTH, 'amount' => 1], $data);
+    }
 }

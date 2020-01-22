@@ -36,8 +36,12 @@ class Limitations
     public function __construct($limitsConfig = [])
     {
         foreach ($limitsConfig as $limit) {
-            $this->add($limit['period'], $limit['amount'], $limit['times'],
-                $limit['group'] ?? ActionInterface::GROUP_DEFAULT);
+            $this->add(
+                $limit['period'],
+                $limit['amount'],
+                $limit['times'],
+                $limit['group'] ?? ActionInterface::GROUP_DEFAULT
+            );
         }
     }
 
@@ -71,6 +75,7 @@ class Limitations
     public function add(string $period, int $amount, int $times, string $group = ActionInterface::GROUP_DEFAULT): self
     {
         $this->limits[$group][$period][$amount] = $times;
+        $this->sortData();
 
         return $this;
     }
@@ -85,7 +90,18 @@ class Limitations
      */
     public function getLimits($group = ActionInterface::GROUP_DEFAULT): array
     {
-        $this->sortData();
         return $this->limits[$group] ?? [];
+    }
+
+    /**
+     * @param string $group
+     * @return array
+     */
+    public function getExtremeLimit($group = ActionInterface::GROUP_DEFAULT): array
+    {
+        $lastPeriod = array_key_last($this->limits[$group]);
+        $lastAmount = array_key_last($this->limits[$group][$lastPeriod]);
+
+        return ['period' => $lastPeriod, 'amount' => $lastAmount];
     }
 }

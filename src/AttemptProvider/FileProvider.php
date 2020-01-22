@@ -9,7 +9,7 @@ namespace Makm\FloodControl\AttemptProvider;
 
 /**
  * Class FileProvider
- * @package Makm\FloodControl\Tests\AttemptPrivider
+ * @package Makm\FloodControl\AttemptProvider
  */
 class FileProvider implements AttemptProviderInterface
 {
@@ -56,7 +56,7 @@ class FileProvider implements AttemptProviderInterface
      * @param $actionKey
      * @param \DateTime $dateTime
      */
-    private function writeDate($actionKey, \DateTime $dateTime)
+    private function writeDate($actionKey, \DateTime $dateTime): void
     {
         $filename = $this->getFilename($actionKey);
         $dates = $this->readDates($actionKey);
@@ -70,7 +70,7 @@ class FileProvider implements AttemptProviderInterface
      * @param \DateTime $afterDateTime
      * @return array
      */
-    private function filterAfter($dates, \DateTime $afterDateTime)
+    private function filterAfter($dates, \DateTime $afterDateTime): array
     {
         return array_filter(
             $dates,

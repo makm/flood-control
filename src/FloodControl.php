@@ -14,15 +14,9 @@ use Makm\FloodControl\AttemptProvider\AttemptProviderInterface;
  */
 class FloodControl
 {
-    /**
-     * @var Limitations
-     */
-    private $limitations;
+    private Limitations $limitations;
 
-    /**
-     * @var AttemptProviderInterface
-     */
-    private $attemptProvider;
+    private AttemptProviderInterface $attemptProvider;
 
     /**
      * FloodControl constructor.
@@ -45,7 +39,7 @@ class FloodControl
      * @param ActionInterface $floodAction
      * @return string
      */
-    private function createKey(ActionInterface $floodAction)
+    private function createKey(ActionInterface $floodAction): string
     {
         return $floodAction->getGroup().'-'.$floodAction->getActionIdentity();
     }
@@ -65,6 +59,11 @@ class FloodControl
             $this->createKey($floodAction),
             new \DateTime()
         );
+
+        [$period, $amount] = \array_values($this->limitations->getExtremeLimit($floodAction->getGroup()));
+        $purgeBeforeDate = new \DateTime("-{$amount} {$period}");
+
+        $this->attemptProvider->purge($this->createKey($floodAction), $purgeBeforeDate);
 
         return true;
     }

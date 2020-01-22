@@ -56,8 +56,13 @@ class FloodControlTest extends TestCase
         $this->limitations->expects($this->exactly(2))->method('getLimits')->willReturn([
             'day' => [1 => 1],
         ]);
+        $this->limitations->expects($this->exactly(1))
+            ->method('getExtremeLimit')
+            ->willReturn(['period' => 'day', 'amount' => 1]);
+
         $this->provider->expects($this->once())->method('push');
-        $this->provider->expects($this->exactly(2))->method('times')->willReturn(0,1);
+        $this->provider->expects($this->exactly(2))->method('times')->willReturn(0, 1);
+        $this->provider->expects($this->once())->method('purge');
         $result = $this->floodControl->doAttempt($action);
         $this->assertTrue($result);
         $result = $this->floodControl->doAttempt($action);

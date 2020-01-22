@@ -26,9 +26,9 @@ interface AttemptProviderInterface
     public function times(string $actionKey, \DateTime $afterDateTime): int;
 
     /**
-     * @param $actionKey
+     * @param string $actionKey
      * @param \DateTime|null $beforeDateTime
      * @return void
      */
-    public function purge($actionKey, \DateTime $beforeDateTime = null): void;
+    public function purge(string $actionKey, \DateTime $beforeDateTime = null): void;
 }
