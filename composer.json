@@ -1,6 +1,6 @@
 {
   "name": "makm/flood-control",
-  "description": "",
+  "description": "simple flood control for any actions",
   "authors": [
     {
       "name": "Maxim Kapkaev",
@@ -15,5 +15,7 @@
       "Makm\\FloodControl\\": "src/",
       "Makm\\FloodControl\\Tests\\": "tests/"
     }
-  }
+  },
+  "keywords": ["php", "flood", "control", "anti"],
+  "license": "MIT"
 }
