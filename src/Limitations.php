@@ -94,6 +94,8 @@ class Limitations
     }
 
     /**
+     * fetch last period data
+     *
      * @param string $group
      * @return array
      */

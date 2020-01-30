@@ -37,20 +37,26 @@ class RedisProviderTest extends TestCase
         $this->provider->purge($testKey);
 
         // base tests
+        $firstDateTimeTest = new \DateTime();
         $this->redis->expects($this->exactly(3))->method('zCount')->willReturn(1, 2, 2);
         $this->redis->expects($this->exactly(3))->method('zAdd');
+        $this->redis->expects($this->exactly(3))->method('zRange')
+            ->willReturn([$firstDateTimeTest->format('U.u')]);
 
-        $this->provider->push($testKey, new \DateTime);
-        $times = $this->provider->times($testKey, new \DateTime('-1 month'));
+        $this->provider->push($testKey, $firstDateTimeTest);
+        [$times, $firstDateTime] = $this->provider->timesAndFirstDateTime($testKey, new \DateTime('-1 month'));
         $this->assertEquals(1, $times);
+        $this->assertEquals($firstDateTimeTest, $firstDateTime);
 
         $this->provider->push($testKey, new \DateTime);
-        $times = $this->provider->times($testKey, new \DateTime('-1 month'));
+        [$times, $firstDateTime] = $this->provider->timesAndFirstDateTime($testKey, new \DateTime('-1 month'));
         $this->assertEquals(2, $times);
+        $this->assertEquals($firstDateTimeTest, $firstDateTime);
 
         $this->provider->push($testKey, new \DateTime('-2 month'));
-        $times = $this->provider->times($testKey, new \DateTime('-1 month'));
+        [$times, $firstDateTime] = $this->provider->timesAndFirstDateTime($testKey, new \DateTime('-1 month'));
         $this->assertEquals(2, $times);
+        $this->assertEquals($firstDateTimeTest, $firstDateTime);
     }
 
     /**
@@ -62,18 +68,24 @@ class RedisProviderTest extends TestCase
         $this->provider->purge($action);
 
         //purge all test
+        $firstDateTimeTest = new \DateTime();
         $this->redis->expects($this->exactly(2))->method('zCount')->willReturn(3, 0);
         $this->redis->expects($this->exactly(3))->method('zAdd');
+        $this->redis->expects($this->exactly(2))->method('zRange')
+            ->willReturn([$firstDateTimeTest->format('U.u')],[]);
 
+
+        $this->provider->push($action, $firstDateTimeTest);
         $this->provider->push($action, new \DateTime);
         $this->provider->push($action, new \DateTime);
-        $this->provider->push($action, new \DateTime);
-        $times = $this->provider->times($action, new \DateTime('-1 month'));
+        [$times, $firstDateTime] = $this->provider->timesAndFirstDateTime($action, new \DateTime('-1 month'));
         $this->assertEquals(3, $times);
+        $this->assertEquals($firstDateTimeTest, $firstDateTime);
 
         $this->provider->purge($action);
-        $times = $this->provider->times($action, new \DateTime('-1 month'));
+        [$times, $firstDateTime] = $this->provider->timesAndFirstDateTime($action, new \DateTime('-1 month'));
         $this->assertEquals(0, $times);
+        $this->assertEquals(null, $firstDateTime);
     }
 
     /**
@@ -84,17 +96,22 @@ class RedisProviderTest extends TestCase
         $action = 'test-purge-2';
         $this->provider->purge($action);
 
+        $firstDateTimeTest = new \DateTime;
         $this->redis->expects($this->exactly(2))->method('zCount')->willReturn(2, 1);
         $this->redis->expects($this->exactly(2))->method('zAdd');
+        $this->redis->expects($this->exactly(2))->method('zRange')
+            ->willReturn([$firstDateTimeTest->format('U.u')]);
 
 
-        $this->provider->push($action, new \DateTime);
+        $this->provider->push($action, $firstDateTimeTest);
         $this->provider->push($action, new \DateTime('-1 month'));
-        $times = $this->provider->times($action, new \DateTime('-2 month'));
+        [$times, $firstDateTime] = $this->provider->timesAndFirstDateTime($action, new \DateTime('-2 month'));
         $this->assertEquals(2, $times);
+        $this->assertEquals($firstDateTimeTest, $firstDateTime);
 
         $this->provider->purge($action, new \DateTime('-2 week'));
-        $times = $this->provider->times($action, new \DateTime('-2 month'));
+        [$times, $firstDateTime] = $this->provider->timesAndFirstDateTime($action, new \DateTime('-2 month'));
         $this->assertEquals(1, $times);
+        $this->assertEquals($firstDateTimeTest, $firstDateTime);
     }
 }

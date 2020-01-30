@@ -9,6 +9,7 @@ namespace Makm\FloodControl\Tests;
 
 use Makm\FloodControl\ActionInterface;
 use Makm\FloodControl\AttemptProvider\AttemptProviderInterface;
+use Makm\FloodControl\AttemptState;
 use Makm\FloodControl\FloodControl;
 use Makm\FloodControl\Limitations;
 use PHPUnit\Framework\TestCase;
@@ -48,24 +49,104 @@ class FloodControlTest extends TestCase
     }
 
     /**
+     * @return array
      * @throws \Exception
      */
-    public function testDoAttempt()
+    public function allowCasesProvider()
+    {
+        return
+            [
+                [
+                    ['day' => [1 => 1]],
+                    [[1, $firstActualDateTime = new \DateTime()]],
+                    false,
+                    $firstActualDateTime->format('U') - (clone $firstActualDateTime)->modify('-1 day')->format('U'),
+                ],
+                [
+                    ['day' => [1 => 2],],
+                    [[1, new \DateTime()]],
+                    true,
+                    null,
+                ],
+                [
+                    ['month' => [1 => 2]],
+                    [[1, new \DateTime()]],
+                    true,
+                    null,
+                ],
+                [
+                    ['day' => [1 => 4], 'week' => [1 => 10]],
+                    [[3, new \DateTime('-20 hour')], [4, new \DateTime('-1 day')]],
+                    true,
+                    null
+                ],
+                [
+                    ['day' => [1 => 4], 'week' => [1 => 10]],
+                    [[4, $firstActualDateTime = new \DateTime('-20 hour')], [10, new \DateTime('-1 day')]],
+                    false,
+                    $firstActualDateTime->format('U') - (clone $firstActualDateTime)->modify('-4 hour')->format('U'),
+                ],
+                [
+                    ['minute' => [1 => 1],'day' => [1 => 4], 'week' => [1 => 10]],
+                    [[1, $firstActualDateTime = new \DateTime('-10 second')], [4, new \DateTime('-20 hour')], [10, new \DateTime('-1 day')]],
+                    false,
+                    $firstActualDateTime->format('U') - (clone $firstActualDateTime)->modify('-50 second')->format('U'),
+                ],
+            ];
+    }
+
+    /**
+     * @dataProvider allowCasesProvider
+     * @param $limits
+     * @param $timesAndFirstDateTime
+     * @param $allow
+     * @param $diffSeconds
+     * @throws \Exception
+     */
+    public function testAllowCases($limits, $timesAndFirstDateTime, $allow, $diffSeconds): void
+    {
+        $action = $this->getAction('test-allow-');
+        $this->limitations->expects($this->exactly(1))
+            ->method('getLimits')->willReturn($limits);
+
+        $this->provider->expects($this->exactly(count($timesAndFirstDateTime)))
+            ->method('timesAndFirstDateTime')
+            ->willReturn(...$timesAndFirstDateTime);
+
+        $checkForDateTime = new \DateTime();
+        $state = $this->floodControl->allow($action, $checkForDateTime);
+        $this->assertEquals($allow, $state->getAllow(), 'allow times:');
+        $this->assertEquals($diffSeconds, $state->getNextAllowAfterSeconds());
+    }
+
+    /**
+     * @dataProvider allowCasesProvider
+     *
+     * @param $limits
+     * @param $timesAndFirstDateTime
+     * @param $allow
+     * @param $diffSeconds
+     * @throws \Exception
+     */
+    public function testDoAttempt($limits, $timesAndFirstDateTime, $allow, $diffSeconds)
     {
         $action = $this->getAction('test-action');
-        $this->limitations->expects($this->exactly(2))->method('getLimits')->willReturn([
-            'day' => [1 => 1],
-        ]);
-        $this->limitations->expects($this->exactly(1))
+        $this->limitations->expects($this->exactly(1))->method('getLimits')
+            ->willReturn($limits);
+        $this->provider->expects($this->exactly(count($timesAndFirstDateTime)))
+            ->method('timesAndFirstDateTime')
+            ->willReturn(...$timesAndFirstDateTime);
+
+
+        // purge if allow
+        $this->limitations->expects($this->exactly((int) $allow))
             ->method('getExtremeLimit')
             ->willReturn(['period' => 'day', 'amount' => 1]);
 
-        $this->provider->expects($this->once())->method('push');
-        $this->provider->expects($this->exactly(2))->method('times')->willReturn(0, 1);
-        $this->provider->expects($this->once())->method('purge');
-        $result = $this->floodControl->doAttempt($action);
-        $this->assertTrue($result);
-        $result = $this->floodControl->doAttempt($action);
-        $this->assertFalse($result);
+        $this->provider->expects($this->exactly((int) $allow))->method('push');
+        $this->provider->expects($this->exactly((int) $allow))->method('purge');
+
+        $state = $this->floodControl->doAttempt($action);
+        $this->assertEquals($allow, $state);
     }
 }

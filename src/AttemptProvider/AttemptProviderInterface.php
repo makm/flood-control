@@ -13,19 +13,25 @@ namespace Makm\FloodControl\AttemptProvider;
 interface AttemptProviderInterface
 {
     /**
+     * push new action into list
+     *
      * @param string $actionKey
      * @param \DateTime $dateTime
      */
     public function push(string $actionKey, \DateTime $dateTime): void;
 
     /**
+     * times until date and first dateTime of action in period  pair
+     *
      * @param string $actionKey
      * @param \DateTime $afterDateTime
-     * @return int
+     * @return array
      */
-    public function times(string $actionKey, \DateTime $afterDateTime): int;
+    public function timesAndFirstDateTime(string $actionKey, \DateTime $afterDateTime): array;
 
     /**
+     * purge non actual dates
+     *
      * @param string $actionKey
      * @param \DateTime|null $beforeDateTime
      * @return void
