@@ -7,6 +7,7 @@
 namespace Makm\FloodControl;
 
 use Makm\FloodControl\AttemptProvider\AttemptProviderInterface;
+use Makm\FloodControl\Exception\IncorrectStateException;
 
 /**
  * Class FloodControl
@@ -46,18 +47,24 @@ class FloodControl
 
     /**
      * @param ActionInterface $floodAction
+     * @param \DateTime|null $dateTime
      * @return bool
      * @throws \Exception
      */
-    public function doAttempt(ActionInterface $floodAction): bool
+    public function doAttempt(ActionInterface $floodAction, ?\DateTime $dateTime = null): bool
     {
-        if (!$this->allow($floodAction)) {
+        if ($dateTime === null) {
+            $dateTime = new \DateTime();
+        }
+
+        $state = $this->allow($floodAction);
+        if (!$state->getAllow()) {
             return false;
         }
 
         $this->attemptProvider->push(
             $this->createKey($floodAction),
-            new \DateTime()
+            $dateTime
         );
 
         [$period, $amount] = \array_values($this->limitations->getExtremeLimit($floodAction->getGroup()));
@@ -70,23 +77,44 @@ class FloodControl
 
     /**
      * @param ActionInterface $floodAction
-     * @return bool
+     * @param \DateTime|null $dateTime
+     * @return AttemptState
      * @throws \Exception
      */
-    public function allow(ActionInterface $floodAction): bool
+    public function allow(ActionInterface $floodAction, ?\DateTime $dateTime = null): AttemptState
     {
+        if ($dateTime === null) {
+            $dateTime = new \DateTime();
+        }
+
+        $nextAttemptAllowAfterSecondsList = [];
+
         $limits = $this->limitations->getLimits($floodAction->getGroup());
         foreach ($limits as $period => $periodAmounts) {
             $key = $this->createKey($floodAction);
             foreach ($periodAmounts as $amount => $periodTimes) {
-                $tillDate = new \DateTime("-{$amount} {$period}");
-                $times = $this->attemptProvider->times($key, $tillDate);
-                if ($times < $periodTimes) {
-                    return true;
+                $tillDate = clone $dateTime;
+                $tillDate->modify("-{$amount} {$period}");
+
+                /* @var int $times */
+                /* @var \DateTime $firstActionDateTime */
+                [$times, $firstActionDateTime] = $this->attemptProvider->timesAndFirstDateTime($key, $tillDate);
+                $allowTimes = $periodTimes - $times;
+
+                if ($allowTimes <= 0) {
+                    $nextAttemptAllowAfterSecondsList[] =
+                        $firstActionDateTime
+                            ? $firstActionDateTime->format('U') - $tillDate->format('U')
+                            : $dateTime->format('U') - $tillDate->format('U');
                 }
             }
         }
 
-        return false;
+        if ($nextAttemptAllowAfterSecondsList) {
+            return new AttemptState(false, min($nextAttemptAllowAfterSecondsList));
+        }
+
+
+        return new AttemptState(true, null);
     }
 }

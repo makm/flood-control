@@ -14,6 +14,7 @@ namespace Makm\FloodControl\AttemptProvider;
 class FileProvider implements AttemptProviderInterface
 {
     private const FILENAME_PREFIX = 'flood-control-data';
+    private const DATE_FORMAT = 'U.u';
 
     /**
      * @var string
@@ -60,7 +61,7 @@ class FileProvider implements AttemptProviderInterface
     {
         $filename = $this->getFilename($actionKey);
         $dates = $this->readDates($actionKey);
-        $dates[] = $dateTime->format(\DateTime::RFC3339);
+        $dates[] = $dateTime->format(self::DATE_FORMAT);
         sort($dates);
         file_put_contents($filename, \serialize($dates));
     }
@@ -75,7 +76,7 @@ class FileProvider implements AttemptProviderInterface
         return array_filter(
             $dates,
             static function (string $date) use ($afterDateTime) {
-                return \DateTime::createFromFormat(\DateTime::RFC3339, $date) >= $afterDateTime;
+                return \DateTime::createFromFormat(self::DATE_FORMAT, $date) >= $afterDateTime;
             }
         );
     }
@@ -91,12 +92,15 @@ class FileProvider implements AttemptProviderInterface
     /**
      * @inheritDoc
      */
-    public function times(string $actionKey, \DateTime $afterDateTime): int
+    public function timesAndFirstDateTime(string $actionKey, \DateTime $afterDateTime): array
     {
-        return \count($this->filterAfter(
-            $this->readDates($actionKey),
-            $afterDateTime
-        ));
+        $list = $this->filterAfter($this->readDates($actionKey), $afterDateTime);
+        $count = count($list);
+        $firstDateTime = $list
+            ? \DateTime::createFromFormat(self::DATE_FORMAT, \array_shift($list))
+            : null;
+
+        return [$count, $firstDateTime];
     }
 
     /**
@@ -112,6 +116,7 @@ class FileProvider implements AttemptProviderInterface
 
         if ($beforeDateTime === null) {
             unlink($filename);
+
             return;
         }
 

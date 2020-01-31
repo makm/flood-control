@@ -13,6 +13,9 @@ namespace Makm\FloodControl\AttemptProvider;
  */
 class RedisProvider implements AttemptProviderInterface
 {
+    private const DATE_FORMAT_INDEX = 'Uu';
+    private const DATE_FORMAT_VALUE = 'U.u';
+
     private \Redis $redis;
 
     /**
@@ -29,19 +32,26 @@ class RedisProvider implements AttemptProviderInterface
      */
     public function push(string $actionKey, \DateTime $dateTime): void
     {
-        $index = $dateTime->format('Uu');
-        $this->redis->zAdd($actionKey, $index, $index);
+        $index = $dateTime->format(self::DATE_FORMAT_INDEX);
+        $value = $dateTime->format(self::DATE_FORMAT_VALUE);
+        $this->redis->zAdd($actionKey, $index, $value);
     }
 
     /**
      * @inheritDoc
      */
-    public function times(string $actionKey, \DateTime $afterDateTime): int
+    public function timesAndFirstDateTime(string $actionKey, \DateTime $afterDateTime): array
     {
-        $first = (new \DateTime())->format('Uu');
-        $last = $afterDateTime->format('Uu');
+        $last = (new \DateTime())->format(self::DATE_FORMAT_INDEX);
+        $first = $afterDateTime->format(self::DATE_FORMAT_INDEX);
+        $count = $this->redis->zCount($actionKey, $first, $last);
+        $firstDateValues = $this->redis->zRange($actionKey, $first, 0);
 
-        return $this->redis->zCount($actionKey, $last, $first);
+        $firstDateTime = $firstDateValues
+            ? \DateTime::createFromFormat(self::DATE_FORMAT_VALUE, \array_shift($firstDateValues))
+            : null;
+
+        return [$count, $firstDateTime];
     }
 
     /**
@@ -54,7 +64,7 @@ class RedisProvider implements AttemptProviderInterface
 
             return;
         }
-        $last = $beforeDateTime->format('Uu');
+        $last = $beforeDateTime->format(self::DATE_FORMAT_INDEX);
 
         $this->redis->zRemRangeByScore($actionKey, 0, $last);
     }
