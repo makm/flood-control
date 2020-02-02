@@ -82,15 +82,15 @@ class FloodControlTest extends TestCase
                 ],
                 [
                     ['day' => [1 => 4], 'week' => [1 => 10]],
-                    [[4, $firstActualDateTime = new \DateTime('-20 hour')], [10, new \DateTime('-1 day')]],
+                    [[4, new \DateTime('-20 hour')], [10, $firstActualDateTime = new \DateTime('-1 day')]],
                     false,
-                    $firstActualDateTime->format('U') - (clone $firstActualDateTime)->modify('-4 hour')->format('U'),
+                    $firstActualDateTime->format('U') - (clone $firstActualDateTime)->modify('-6 days')->format('U'),
                 ],
                 [
                     ['minute' => [1 => 1],'day' => [1 => 4], 'week' => [1 => 10]],
-                    [[1, $firstActualDateTime = new \DateTime('-10 second')], [4, new \DateTime('-20 hour')], [10, new \DateTime('-1 day')]],
+                    [[1, new \DateTime('-10 second')], [4, new \DateTime('-20 hour')], [10, $firstActualDateTime =  new \DateTime('-1 day')]],
                     false,
-                    $firstActualDateTime->format('U') - (clone $firstActualDateTime)->modify('-50 second')->format('U'),
+                    $firstActualDateTime->format('U') - (clone $firstActualDateTime)->modify('-6 days')->format('U'),
                 ],
             ];
     }

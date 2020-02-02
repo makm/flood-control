@@ -40,7 +40,7 @@ class RedisProviderTest extends TestCase
         $firstDateTimeTest = new \DateTime();
         $this->redis->expects($this->exactly(3))->method('zCount')->willReturn(1, 2, 2);
         $this->redis->expects($this->exactly(3))->method('zAdd');
-        $this->redis->expects($this->exactly(3))->method('zRange')
+        $this->redis->expects($this->exactly(3))->method('zRangeByScore')
             ->willReturn([$firstDateTimeTest->format('U.u')]);
 
         $this->provider->push($testKey, $firstDateTimeTest);
@@ -71,7 +71,7 @@ class RedisProviderTest extends TestCase
         $firstDateTimeTest = new \DateTime();
         $this->redis->expects($this->exactly(2))->method('zCount')->willReturn(3, 0);
         $this->redis->expects($this->exactly(3))->method('zAdd');
-        $this->redis->expects($this->exactly(2))->method('zRange')
+        $this->redis->expects($this->exactly(2))->method('zRangeByScore')
             ->willReturn([$firstDateTimeTest->format('U.u')],[]);
 
 
@@ -99,7 +99,7 @@ class RedisProviderTest extends TestCase
         $firstDateTimeTest = new \DateTime;
         $this->redis->expects($this->exactly(2))->method('zCount')->willReturn(2, 1);
         $this->redis->expects($this->exactly(2))->method('zAdd');
-        $this->redis->expects($this->exactly(2))->method('zRange')
+        $this->redis->expects($this->exactly(2))->method('zRangeByScore')
             ->willReturn([$firstDateTimeTest->format('U.u')]);
 
 
