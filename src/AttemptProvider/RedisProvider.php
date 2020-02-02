@@ -45,7 +45,7 @@ class RedisProvider implements AttemptProviderInterface
         $last = (new \DateTime())->format(self::DATE_FORMAT_INDEX);
         $first = $afterDateTime->format(self::DATE_FORMAT_INDEX);
         $count = $this->redis->zCount($actionKey, $first, $last);
-        $firstDateValues = $this->redis->zRange($actionKey, $first, 0);
+        $firstDateValues = $this->redis->zRangeByScore($actionKey, $first,$last,['limit' => [0, 1]]);
 
         $firstDateTime = $firstDateValues
             ? \DateTime::createFromFormat(self::DATE_FORMAT_VALUE, \array_shift($firstDateValues))

@@ -111,7 +111,7 @@ class FloodControl
         }
 
         if ($nextAttemptAllowAfterSecondsList) {
-            return new AttemptState(false, min($nextAttemptAllowAfterSecondsList));
+            return new AttemptState(false, max($nextAttemptAllowAfterSecondsList));
         }
 
 
